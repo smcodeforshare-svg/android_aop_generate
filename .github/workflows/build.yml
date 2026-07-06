@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK and Deploy to GitHub Pages
 
 on:
   push:
@@ -37,3 +37,106 @@ jobs:
       with:
         name: release-apk
         path: app/build/outputs/apk/release/*.apk
+
+    - name: Download APK artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: debug-apk
+        path: apk-files
+
+    - name: Create download page
+      run: |
+        mkdir -p _site
+        cat > _site/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>My Basic App - Download</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    max-width: 800px;
+                    margin: 50px auto;
+                    padding: 20px;
+                    background-color: #f5f5f5;
+                }
+                .container {
+                    background-color: white;
+                    padding: 30px;
+                    border-radius: 10px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }
+                h1 {
+                    color: #333;
+                    text-align: center;
+                }
+                .download-section {
+                    margin: 30px 0;
+                    padding: 20px;
+                    background-color: #f9f9f9;
+                    border-radius: 5px;
+                }
+                .download-btn {
+                    display: inline-block;
+                    padding: 12px 24px;
+                    background-color: #4CAF50;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin: 10px 5px;
+                }
+                .download-btn:hover {
+                    background-color: #45a049;
+                }
+                .info {
+                    margin-top: 20px;
+                    padding: 15px;
+                    background-color: #e3f2fd;
+                    border-left: 4px solid #2196F3;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>My Basic App</h1>
+                <p style="text-align: center; color: #666;">A simple Android app displaying HTML content</p>
+                
+                <div class="download-section">
+                    <h2>Download APK</h2>
+                    <p>Click the button below to download the latest APK:</p>
+                    <a href="app-debug.apk" class="download-btn" download>Download Debug APK</a>
+                </div>
+
+                <div class="info">
+                    <h3>Installation Instructions:</h3>
+                    <ol>
+                        <li>Download the APK file</li>
+                        <li>On your Android device, go to Settings > Security</li>
+                        <li>Enable "Unknown Sources" or "Install unknown apps"</li>
+                        <li>Open the downloaded APK file to install</li>
+                    </ol>
+                </div>
+
+                <div class="download-section">
+                    <h2>App Features:</h2>
+                    <ul>
+                        <li>Displays HTML content in WebView</li>
+                        <li>Simple and lightweight</li>
+                        <li>Minimum SDK: 21 (Android 5.0)</li>
+                        <li>Target SDK: 33 (Android 13)</li>
+                    </ul>
+                </div>
+            </div>
+        </body>
+        </html>
+        EOF
+
+    - name: Copy APK to site
+      run: cp apk-files/*.apk _site/app-debug.apk
+
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v4
+      with:
+        folder: _site
